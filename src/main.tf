@@ -12,47 +12,45 @@ module "vpc" {
   enable_nat_gateway = true
   enable_vpn_gateway = false
 
-  tags = var.aws_project_tags
+  tags = merge(var.aws_project_tags, { "kubernetes.io/cluster/${var.aws_eks_name}" = "shared" })
 
-  # tags = merge(var.aws_project_tags, { "kubernetes.io/cluster/${var.aws_eks_name}" = "shared" })
+  public_subnet_tags = {
+    "kubernetes.io/cluster/${var.aws_eks_name}" = "shared"
+    "kubernetes.io/role/elb"                    = 1
+  }
 
-  # public_subnet_tags = {
-  #   "kubernetes.io/cluster/${var.aws_eks_name}" = "shared"
-  #   "kubernetes.io/role/elb"                    = 1
-  # }
-
-  # private_subnet_tags = {
-  #   "kubernetes.io/cluster/${var.aws_eks_name}" = "shared"
-  #   "kubernetes.io/role/internal-elb"           = 1
-  # }
+  private_subnet_tags = {
+    "kubernetes.io/cluster/${var.aws_eks_name}" = "shared"
+    "kubernetes.io/role/internal-elb"           = 1
+  }
 
 }
 
-# module "eks" {
-#   source  = "terraform-aws-modules/eks/aws"
-#   version = "20.8.5"
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "20.8.5"
 
-#   cluster_name    = var.aws_eks_name
-#   cluster_version = var.aws_eks_version
+  cluster_name    = var.aws_eks_name
+  cluster_version = var.aws_eks_version
 
-#   enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = true
 
-#   subnet_ids = module.vpc.private_subnets
-#   vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+  vpc_id     = module.vpc.vpc_id
 
-#   cluster_endpoint_public_access = true
+  cluster_endpoint_public_access = true
 
-#   eks_managed_node_groups = {
-#     default = {
-#       create_launch_template     = false
-#       use_custom_launch_template = false
+  eks_managed_node_groups = {
+    default = {
+      create_launch_template     = false
+      use_custom_launch_template = false
 
-#       instance_types = var.aws_eks_managed_node_groups_instance_types
-#       min_size       = 2
-#       max_size       = 2
-#       desired_size   = 2
-#       #       tags           = var.aws_project_tags
-#     }
-#   }
-#   # tags = var.aws_project_tags
-# }
+      instance_types = var.aws_eks_managed_node_groups_instance_types
+      min_size       = 2
+      max_size       = 2
+      desired_size   = 2
+      tags           = var.aws_project_tags
+    }
+  }
+  tags = var.aws_project_tags
+}
